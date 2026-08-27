@@ -1,0 +1,92 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: "Inter", var(--font-geist-sans);
+  --font-mono: "JetBrains Mono", var(--font-geist-mono);
+  --font-heading: "Inter", var(--font-geist-sans);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-sidebar: var(--background);
+  --color-sidebar-foreground: var(--foreground);
+  --color-sidebar-border: var(--border);
+  --color-sidebar-accent: var(--muted);
+  --color-sidebar-accent-foreground: var(--muted-foreground);
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+}
+
+:root {
+  --background: #FDFBF7;
+  --foreground: #111827;
+  --card: #F7F4EB;
+  --card-foreground: #111827;
+  --popover: #F7F4EB;
+  --popover-foreground: #111827;
+  --primary: #E65C00;
+  --primary-foreground: #ffffff;
+  --secondary: #FDFBF7;
+  --secondary-foreground: #111827;
+  --muted: #E5E7EB;
+  --muted-foreground: #4B5563;
+  --accent: #FFB380;
+  --accent-foreground: #111827;
+  --destructive: #ef4444;
+  --border: #E5E7EB;
+  --input: #E5E7EB;
+  --ring: #E65C00;
+  --radius: 8px;
+}
+
+.dark {
+  --background: #111827;
+  --foreground: #FDFBF7;
+  --card: #1f2937;
+  --card-foreground: #FDFBF7;
+  --popover: #1f2937;
+  --popover-foreground: #FDFBF7;
+  --primary: #FFB380;
+  --primary-foreground: #111827;
+  --secondary: #111827;
+  --secondary-foreground: #FDFBF7;
+  --muted: #374151;
+  --muted-foreground: #9ca3af;
+  --accent: #E65C00;
+  --accent-foreground: #ffffff;
+  --destructive: #ef4444;
+  --border: #374151;
+  --input: #374151;
+  --ring: #FFB380;
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-heading;
+  }
+}
