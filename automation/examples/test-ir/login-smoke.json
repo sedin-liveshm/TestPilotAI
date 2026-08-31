@@ -1,0 +1,48 @@
+{
+  "version": "1",
+  "id": "login-smoke",
+  "name": "Login smoke test",
+  "description": "Verifies that the login page loads and basic assertions pass",
+  "actions": [
+    {
+      "type": "navigate",
+      "url": "/login"
+    },
+    {
+      "type": "fill",
+      "target": {
+        "strategy": "label",
+        "value": "Email"
+      },
+      "value": "user@example.com"
+    },
+    {
+      "type": "fill",
+      "target": {
+        "strategy": "placeholder",
+        "value": "Password"
+      },
+      "value": "securepassword123"
+    },
+    {
+      "type": "click",
+      "target": {
+        "strategy": "role",
+        "role": "button",
+        "name": "Login"
+      }
+    },
+    {
+      "type": "assertVisible",
+      "target": {
+        "strategy": "role",
+        "role": "heading",
+        "name": "Dashboard"
+      }
+    },
+    {
+      "type": "assertUrl",
+      "url": "/dashboard"
+    }
+  ]
+}
