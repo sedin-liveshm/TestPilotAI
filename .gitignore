@@ -1,6 +1,7 @@
 # Environment & Local Secrets
 .env
 *.env
+backend/.env
 
 # Python Virtual Environments
 .venv/
