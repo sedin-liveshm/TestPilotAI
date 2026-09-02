@@ -1,12 +1,23 @@
-import { Sidebar } from "./Sidebar";
-import { Menu, UserCircle } from "lucide-react";
-import { Button } from "@/components/ui/button";
+"use client";
+import { useRouter } from 'next/navigation';
+import { Menu, UserCircle, LogOut } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { useAuthStore } from '@/store/auth-store';
+import { Sidebar } from './Sidebar';
 
 interface AppShellProps {
   children: React.ReactNode;
 }
 
 export function AppShell({ children }: AppShellProps) {
+  const router = useRouter();
+  const { logout, user, status } = useAuthStore();
+
+  const handleLogout = async () => {
+    await logout();
+    router.replace('/login');
+  };
+
   return (
     <div className="grid min-h-screen w-full md:grid-cols-[256px_1fr]">
       <Sidebar />
@@ -16,17 +27,17 @@ export function AppShell({ children }: AppShellProps) {
             <Menu className="h-5 w-5" />
             <span className="sr-only">Toggle navigation menu</span>
           </Button>
-          <div className="w-full flex-1">
-            {/* Search or breadcrumbs could go here */}
-          </div>
-          <Button variant="ghost" size="icon" className="rounded-full">
+          <div className="w-full flex-1" />
+          {status === 'authenticated' && (
+            <Button variant="ghost" size="icon" onClick={handleLogout} className="rounded-full" aria-label="Logout">
+              <LogOut className="h-5 w-5 text-muted-foreground" />
+            </Button>
+          )}
+          <Button variant="ghost" size="icon" className="rounded-full" aria-label="User menu">
             <UserCircle className="h-6 w-6 text-muted-foreground" />
-            <span className="sr-only">Toggle user menu</span>
           </Button>
         </header>
-        <main className="flex-1 p-4 lg:p-6 bg-muted/20">
-          {children}
-        </main>
+        <main className="flex-1 p-4 lg:p-6 bg-muted/20">{children}</main>
       </div>
     </div>
   );
