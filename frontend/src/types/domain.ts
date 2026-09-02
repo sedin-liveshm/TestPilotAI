@@ -17,9 +17,8 @@ export interface Project {
   id: string;
   name: string;
   description?: string;
-  ownerId: string;
-  createdAt: string;
-  updatedAt: string;
+  target_base_url: string;
+  created_at: string;
 }
 
 export interface Test {
