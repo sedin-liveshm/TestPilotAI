@@ -23,7 +23,7 @@ export function AppShell({ children }: AppShellProps) {
       <Sidebar />
       <div className="flex flex-col">
         <header className="flex h-14 items-center gap-4 border-b bg-background px-4 lg:h-[60px] lg:px-6">
-          <Button variant="outline" size="icon" className="shrink-0 md:hidden">
+          <Button variant="outline" size="icon" className="shrink-0 ">
             <Menu className="h-5 w-5" />
             <span className="sr-only">Toggle navigation menu</span>
           </Button>
