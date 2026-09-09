@@ -35,8 +35,8 @@ export const useAuthStore = create<AuthState>((set) => ({
       // Store token in memory; real app would set HttpOnly cookie via backend.
       // For now we simply keep user info.
       set({ user: response.user, status: 'authenticated' });
-    } catch (err: any) {
-      const message = err?.message ?? 'Login failed';
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Login failed';
       set({ error: message, status: 'unauthenticated' });
     }
   },
