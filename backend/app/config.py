@@ -6,8 +6,10 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 class Settings(BaseSettings):
     """Application configuration loaded securely from environment variables / .env file."""
 
-    SUPABASE_URL: str = Field(..., description="Supabase project API URL")
-    SUPABASE_KEY: str = Field(..., description="Supabase API key")
+    SUPABASE_URL: str = Field(default="https://placeholder-project.supabase.co", description="Supabase project API URL")
+    SUPABASE_KEY: str = Field(default="placeholder-anon-key", description="Supabase API key")
+    SUPABASE_JWT_SECRET: str | None = Field(default=None, description="Supabase JWT secret for token verification")
+    ENVIRONMENT: str = Field(default="development", description="Runtime environment")
 
     model_config = SettingsConfigDict(
         env_file=".env",
