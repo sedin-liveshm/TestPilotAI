@@ -12,18 +12,25 @@ import { create } from 'zustand';
 interface UIState {
   activeProjectId: string | null;
   isSidebarOpen: boolean;
+  isMobileSidebarOpen: boolean;
   
   // Actions
   setActiveProject: (id: string | null) => void;
   toggleSidebar: () => void;
   setSidebarOpen: (isOpen: boolean) => void;
+  toggleMobileSidebar: () => void;
+  setMobileSidebarOpen: (isOpen: boolean) => void;
 }
 
 export const useUIStore = create<UIState>((set) => ({
   activeProjectId: null,
-  isSidebarOpen: false,
+  isSidebarOpen: true,
+  isMobileSidebarOpen: false,
 
   setActiveProject: (id) => set({ activeProjectId: id }),
   toggleSidebar: () => set((state) => ({ isSidebarOpen: !state.isSidebarOpen })),
   setSidebarOpen: (isOpen) => set({ isSidebarOpen: isOpen }),
+  toggleMobileSidebar: () => set((state) => ({ isMobileSidebarOpen: !state.isMobileSidebarOpen })),
+  setMobileSidebarOpen: (isOpen) => set({ isMobileSidebarOpen: isOpen }),
 }));
+

@@ -1,3 +1,5 @@
+import { TestIR } from './test-ir';
+
 /**
  * Core frontend domain types for TestPilot AI.
  * 
@@ -14,22 +16,35 @@ export interface User {
 }
 
 export interface Project {
+
   id: string;
   name: string;
   description?: string;
-  target_base_url: string;
-  created_at: string;
+  ownerId?: string;
+  owner_id?: string;
+  baseUrl?: string;
+  base_url?: string;
+  createdAt?: string;
+  created_at?: string;
+  updatedAt?: string;
+  updated_at?: string;
 }
 
 export interface Test {
   id: string;
-  projectId: string;
+  projectId?: string;
+  project_id?: string;
   name: string;
   description?: string;
   testIrId?: string; // Reference to the canonical Test IR representation
-  createdAt: string;
-  updatedAt: string;
+  test_ir?: TestIR | Record<string, unknown>;
+  ir_version?: number;
+  createdAt?: string;
+  created_at?: string;
+  updatedAt?: string;
+  updated_at?: string;
 }
+
 
 export interface TestRun {
   id: string;

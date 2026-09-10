@@ -1,4 +1,5 @@
 import { ApiError, ApiErrorResponse, ApiResponse } from './api-types';
+import { useAuthStore } from '@/store/auth-store';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1';
 
@@ -17,9 +18,13 @@ async function fetchClient<T>(
     headers.set('Content-Type', 'application/json');
   }
 
-  // TODO: Add auth tokens here when authentication is implemented
-  // const token = useAuthStore.getState().token;
-  // if (token) headers.set('Authorization', `Bearer ${token}`);
+  const token = typeof window !== 'undefined'
+    ? localStorage.getItem('auth_token') || useAuthStore.getState().token
+    : useAuthStore.getState().token;
+  if (token && !headers.has('Authorization')) {
+    headers.set('Authorization', `Bearer ${token}`);
+  }
+
 
   const config: RequestInit = {
     ...options,
