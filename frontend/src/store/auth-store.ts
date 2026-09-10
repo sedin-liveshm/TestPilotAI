@@ -13,6 +13,7 @@ import { authApi } from '@/services/auth-api';
  */
 interface AuthState {
   user: User | null;
+  token: string | null;
   status: AuthStatus;
   error: string | null;
 
@@ -25,6 +26,7 @@ interface AuthState {
 
 export const useAuthStore = create<AuthState>((set) => ({
   user: null,
+  token: typeof window !== 'undefined' ? localStorage.getItem('auth_token') : null,
   status: 'idle',
   error: null,
 
@@ -32,11 +34,12 @@ export const useAuthStore = create<AuthState>((set) => ({
     set({ status: 'loading', error: null });
     try {
       const response = await authApi.login(payload);
-      // Store token in memory; real app would set HttpOnly cookie via backend.
-      // For now we simply keep user info.
-      set({ user: response.user, status: 'authenticated' });
-    } catch (err: any) {
-      const message = err?.message ?? 'Login failed';
+      if (typeof window !== 'undefined' && response.accessToken) {
+        localStorage.setItem('auth_token', response.accessToken);
+      }
+      set({ user: response.user, token: response.accessToken, status: 'authenticated' });
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Login failed';
       set({ error: message, status: 'unauthenticated' });
     }
   },
@@ -48,18 +51,23 @@ export const useAuthStore = create<AuthState>((set) => ({
     } catch {
       // ignore logout errors – we still want to clear state
     }
-    set({ user: null, status: 'unauthenticated', error: null });
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('auth_token');
+    }
+    set({ user: null, token: null, status: 'unauthenticated', error: null });
   },
 
   checkSession: async () => {
     set({ status: 'loading' });
     try {
       const user = await authApi.getCurrentUser();
-      set({ user, status: 'authenticated' });
+      const token = typeof window !== 'undefined' ? localStorage.getItem('auth_token') : null;
+      set({ user, token, status: 'authenticated' });
     } catch {
-      set({ user: null, status: 'unauthenticated' });
+      set({ user: null, token: null, status: 'unauthenticated' });
     }
   },
 
   clearError: () => set({ error: null }),
 }));
+

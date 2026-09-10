@@ -10,9 +10,11 @@ export interface TestIR {
   id: string;
   name: string;
   description?: string;
-  steps: TestStep[];
   version: string;
+  actions?: unknown[];
+  steps?: TestStep[];
 }
+
 
 export type ActionType = 'navigate' | 'click' | 'type' | 'select' | 'hover' | 'assert';
 
