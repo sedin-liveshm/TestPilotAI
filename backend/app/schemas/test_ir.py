@@ -1,5 +1,5 @@
 from typing import Annotated, List, Literal, Optional, Union
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, StrictFloat, StrictInt
 
 
 # ============================================================================
@@ -37,6 +37,7 @@ class PlaceholderLocator(BaseModel):
 
 
 class TestIdLocator(BaseModel):
+    __test__ = False
     strategy: Literal["testId"]
     value: str = Field(..., min_length=1)
 
@@ -122,7 +123,7 @@ class PressAction(BaseModel):
 
 class WaitAction(BaseModel):
     type: Literal["wait"]
-    durationMs: float = Field(..., gt=0)
+    durationMs: Union[StrictInt, StrictFloat] = Field(..., gt=0)
 
     model_config = ConfigDict(extra="forbid")
 
@@ -181,6 +182,7 @@ TestAction = Annotated[
 # ============================================================================
 
 class TestIR(BaseModel):
+    __test__ = False
     version: Literal["1"]
     id: str = Field(..., min_length=1)
     name: str = Field(..., min_length=1)

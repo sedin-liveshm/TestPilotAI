@@ -1,4 +1,5 @@
 from datetime import datetime, timezone
+import logging
 from typing import Any, Dict, List, Optional, Tuple
 from uuid import UUID
 from fastapi import HTTPException, status
@@ -6,7 +7,10 @@ from supabase import Client
 
 from app.dependencies.auth import AuthenticatedUser
 from app.schemas.test import TestCreate, TestUpdate
+from app.schemas.test_ir import TestIR
 from app.services.project_service import project_service
+
+logger = logging.getLogger(__name__)
 
 
 class TestService:
@@ -14,10 +18,63 @@ class TestService:
     
     Strictly enforces:
     - Tests belong to parent projects; user must own the parent project.
-    - Test IR schema strictly validated against canonical Test IR v1.
+    - Test IR schema strictly validated against canonical Test IR v1 on write and read.
     - Multi-tenant isolation: Users only access tests belonging to projects they own.
     - PostgreSQL RLS policies evaluate against user's authenticated session.
+    - Corrupted or unsupported data is rejected on read without silent mutation.
     """
+
+    def _validate_stored_ir(self, test_record: Dict[str, Any]) -> Dict[str, Any]:
+        """Validate stored Test IR and ir_version on read.
+        
+        Enforces Phase 5 (Validation on Read):
+        1. Read test_ir and ir_version.
+        2. Validate against supported Test IR v1 contract.
+        3. If invalid or unsupported: do not silently transform it, log error
+           details for debugging, and raise clear HTTP 500 application error without
+           exposing sensitive database details.
+        4. Never automatically mutate corrupted data.
+        """
+        ir_version = test_record.get("ir_version")
+        raw_ir = test_record.get("test_ir")
+
+        if ir_version != 1:
+            logger.error(
+                "Unsupported IR version %s for test %s",
+                ir_version,
+                test_record.get("id"),
+            )
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Stored Test IR has an unsupported version",
+            )
+
+        if not isinstance(raw_ir, dict):
+            logger.error(
+                "Stored Test IR is not a valid JSON object for test %s: %r",
+                test_record.get("id"),
+                raw_ir,
+            )
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Stored Test IR is corrupted or invalid",
+            )
+
+        try:
+            validated_ir = TestIR.model_validate(raw_ir)
+        except Exception as err:
+            logger.error(
+                "Stored Test IR failed validation for test %s: %s",
+                test_record.get("id"),
+                err,
+            )
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Stored Test IR failed validation against canonical contract",
+            )
+
+        test_record["test_ir"] = validated_ir.model_dump(mode="json", exclude_none=True)
+        return test_record
 
     def create_test(
         self,
@@ -31,7 +88,7 @@ class TestService:
 
         # 2. Prepare test payload with canonical Test IR JSON
         now = datetime.now(timezone.utc).isoformat()
-        test_ir_dict = data.test_ir.model_dump()
+        test_ir_dict = data.test_ir.model_dump(mode="json", exclude_none=True)
 
         payload = {
             "project_id": str(project_id),
@@ -49,7 +106,7 @@ class TestService:
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail="Failed to create test",
             )
-        return response.data[0]
+        return self._validate_stored_ir(response.data[0])
 
     def list_tests(
         self,
@@ -73,7 +130,8 @@ class TestService:
         response = query.execute()
 
         total = response.count if response.count is not None else len(response.data or [])
-        return response.data or [], total
+        validated_tests = [self._validate_stored_ir(t) for t in (response.data or [])]
+        return validated_tests, total
 
     def get_test(
         self, user: AuthenticatedUser, test_id: UUID, db: Client
@@ -91,7 +149,7 @@ class TestService:
         parent_project_id = UUID(test_record["project_id"])
         project_service.get_project(user, parent_project_id, db)
 
-        return test_record
+        return self._validate_stored_ir(test_record)
 
     def update_test(
         self,
@@ -108,7 +166,7 @@ class TestService:
         if data.description is not None:
             updates["description"] = data.description
         if data.test_ir is not None:
-            updates["test_ir"] = data.test_ir.model_dump()
+            updates["test_ir"] = data.test_ir.model_dump(mode="json", exclude_none=True)
             updates["ir_version"] = 1
 
         if not updates:
@@ -128,7 +186,7 @@ class TestService:
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="Test not found or update unauthorized",
             )
-        return response.data[0]
+        return self._validate_stored_ir(response.data[0])
 
     def delete_test(
         self, user: AuthenticatedUser, test_id: UUID, db: Client

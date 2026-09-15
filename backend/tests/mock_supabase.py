@@ -1,3 +1,5 @@
+import copy
+import json
 import uuid
 from typing import Any, Dict, List, Optional
 
@@ -30,12 +32,12 @@ class MockQueryBuilder:
 
     def insert(self, data: Dict[str, Any]):
         self._action = "insert"
-        self._insert_data = dict(data)
+        self._insert_data = copy.deepcopy(data)
         return self
 
     def update(self, data: Dict[str, Any]):
         self._action = "update"
-        self._update_data = dict(data)
+        self._update_data = copy.deepcopy(data)
         return self
 
     def delete(self):
@@ -71,16 +73,20 @@ class MockQueryBuilder:
             return self._execute_select()
 
     def _execute_insert(self) -> MockResponse:
-        row = dict(self._insert_data)
+        row = copy.deepcopy(self._insert_data)
         if "id" not in row:
             row["id"] = str(uuid.uuid4())
+
+        # Simulate PostgreSQL JSONB serialization round-trip
+        if "test_ir" in row:
+            row["test_ir"] = json.loads(json.dumps(row["test_ir"]))
 
         if self.table_name == "projects":
             # RLS: check owner_id == auth.uid()
             if row.get("owner_id") != self.user_id:
                 raise Exception("new row violates row-level security policy for table \"projects\"")
-            self.db.projects[row["id"]] = row
-            return MockResponse([dict(row)])
+            self.db.projects[row["id"]] = copy.deepcopy(row)
+            return MockResponse([copy.deepcopy(row)])
 
         elif self.table_name == "tests":
             # RLS: check parent project owner_id == auth.uid()
@@ -88,8 +94,8 @@ class MockQueryBuilder:
             parent = self.db.projects.get(parent_id)
             if not parent or parent.get("owner_id") != self.user_id:
                 raise Exception("new row violates row-level security policy for table \"tests\"")
-            self.db.tests[row["id"]] = row
-            return MockResponse([dict(row)])
+            self.db.tests[row["id"]] = copy.deepcopy(row)
+            return MockResponse([copy.deepcopy(row)])
 
         raise NotImplementedError(f"Insert not supported for {self.table_name}")
 
@@ -99,14 +105,14 @@ class MockQueryBuilder:
             # RLS: only return projects where owner_id == self.user_id
             for p in self.db.projects.values():
                 if p.get("owner_id") == self.user_id:
-                    results.append(dict(p))
+                    results.append(copy.deepcopy(p))
 
         elif self.table_name == "tests":
             # RLS: only return tests whose parent project owner_id == self.user_id
             for t in self.db.tests.values():
                 parent = self.db.projects.get(t.get("project_id"))
                 if parent and parent.get("owner_id") == self.user_id:
-                    results.append(dict(t))
+                    results.append(copy.deepcopy(t))
 
         # Apply filters
         filtered = []
@@ -139,13 +145,17 @@ class MockQueryBuilder:
 
     def _execute_update(self) -> MockResponse:
         updated_rows = []
+        update_payload = copy.deepcopy(self._update_data)
+        if "test_ir" in update_payload:
+            update_payload["test_ir"] = json.loads(json.dumps(update_payload["test_ir"]))
+
         # Find matching rows subject to RLS
         select_resp = self._execute_select()
         for row in select_resp.data:
             target_dict = self.db.projects if self.table_name == "projects" else self.db.tests
             target = target_dict[row["id"]]
-            target.update(self._update_data)
-            updated_rows.append(dict(target))
+            target.update(copy.deepcopy(update_payload))
+            updated_rows.append(copy.deepcopy(target))
         return MockResponse(updated_rows)
 
     def _execute_delete(self) -> MockResponse:
@@ -155,7 +165,7 @@ class MockQueryBuilder:
             target_dict = self.db.projects if self.table_name == "projects" else self.db.tests
             deleted = target_dict.pop(row["id"], None)
             if deleted:
-                deleted_rows.append(dict(deleted))
+                deleted_rows.append(copy.deepcopy(deleted))
                 # Cascading delete: if project deleted, delete associated tests
                 if self.table_name == "projects":
                     tests_to_del = [
