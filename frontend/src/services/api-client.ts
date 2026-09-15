@@ -12,7 +12,7 @@ async function fetchClient<T>(
   options: RequestInit = {}
 ): Promise<ApiResponse<T>> {
   const url = `${API_BASE_URL}${endpoint}`;
-  
+
   const headers = new Headers(options.headers);
   if (!headers.has('Content-Type') && !(options.body instanceof FormData)) {
     headers.set('Content-Type', 'application/json');
@@ -39,7 +39,7 @@ async function fetchClient<T>(
     }
 
     const data = await response.json().catch(() => null);
-
+    console.log(data);
     if (!response.ok) {
       const errorData = data as ApiErrorResponse | null;
       throw new ApiError(
@@ -61,25 +61,25 @@ async function fetchClient<T>(
     if (error instanceof ApiError) {
       throw error;
     }
-    
+
     // Handle network errors (e.g. CORS, offline)
     throw new ApiError(0, error instanceof Error ? error.message : 'Network error');
   }
 }
 
 export const apiClient = {
-  get: <T>(endpoint: string, options?: RequestInit) => 
+  get: <T>(endpoint: string, options?: RequestInit) =>
     fetchClient<T>(endpoint, { ...options, method: 'GET' }),
-    
+
   post: <T>(endpoint: string, body: unknown, options?: RequestInit) =>
     fetchClient<T>(endpoint, { ...options, method: 'POST', body: JSON.stringify(body) }),
-    
+
   put: <T>(endpoint: string, body: unknown, options?: RequestInit) =>
     fetchClient<T>(endpoint, { ...options, method: 'PUT', body: JSON.stringify(body) }),
-    
+
   patch: <T>(endpoint: string, body: unknown, options?: RequestInit) =>
     fetchClient<T>(endpoint, { ...options, method: 'PATCH', body: JSON.stringify(body) }),
-    
+
   delete: <T>(endpoint: string, options?: RequestInit) =>
     fetchClient<T>(endpoint, { ...options, method: 'DELETE' }),
 };

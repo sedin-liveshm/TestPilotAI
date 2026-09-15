@@ -18,8 +18,8 @@ export function ProjectCard({ project }: ProjectCardProps) {
       </CardHeader>
       <CardContent className="flex-1">
         <div className="text-sm text-muted-foreground">
-          <p>Base URL: {project.target_base_url}</p>
-          <p>Created: {new Date(project.created_at).toLocaleDateString()}</p>
+          <p>Base URL: {project.target_base_url || project.base_url || project.baseUrl || 'N/A'}</p>
+          <p>Created: {project.created_at ? new Date(project.created_at).toLocaleDateString() : project.createdAt ? new Date(project.createdAt).toLocaleDateString() : 'N/A'}</p>
         </div>
       </CardContent>
       <CardFooter>
