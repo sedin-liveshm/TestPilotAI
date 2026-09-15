@@ -24,6 +24,7 @@ export interface Project {
   owner_id?: string;
   baseUrl?: string;
   base_url?: string;
+  target_base_url?: string;
   createdAt?: string;
   created_at?: string;
   updatedAt?: string;

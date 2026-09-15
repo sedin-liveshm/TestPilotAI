@@ -17,35 +17,44 @@ export default function ProjectDetailPage() {
   const router = useRouter();
   const projectId = params.projectId as string;
   const { setActiveProject } = useUIStore();
-  
+
   const [project, setProject] = useState<Project | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchProject = async () => {
-    setIsLoading(true);
-    setError(null);
-    try {
-      const response = await projectsApi.getProject(projectId);
-      setProject(response.data);
-      setActiveProject(projectId); // Set context for navigation/sidebar
-    } catch (err: any) {
-      setError(err.message || 'Failed to load project details');
-      if (err.status === 404) {
-        router.push('/projects');
-      }
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
   useEffect(() => {
+    let isMounted = true;
+    const fetchProject = async () => {
+      setIsLoading(true);
+      setError(null);
+      try {
+        const response = await projectsApi.getProject(projectId);
+        if (isMounted) {
+          setProject(response.data);
+          setActiveProject(projectId);
+        }
+      } catch (err: unknown) {
+        if (!isMounted) return;
+        const errorObj = err as { message?: string; status?: number };
+        setError(errorObj.message || 'Failed to load project details');
+        if (errorObj.status === 404) {
+          router.push('/projects');
+        }
+      } finally {
+        if (isMounted) {
+          setIsLoading(false);
+        }
+      }
+    };
+
     if (projectId) {
       fetchProject();
     }
-    // Cleanup active project when leaving
-    return () => setActiveProject(null);
-  }, [projectId]);
+    return () => {
+      isMounted = false;
+      setActiveProject(null);
+    };
+  }, [projectId, router, setActiveProject]);
 
   if (isLoading) {
     return (
@@ -64,7 +73,7 @@ export default function ProjectDetailPage() {
             Back to Projects
           </Button>
         </Link>
-        <ProjectError message={error || 'Project not found'} onRetry={fetchProject} />
+        <ProjectError message={error || 'Project not found'} onRetry={() => window.location.reload()} />
       </div>
     );
   }
@@ -79,7 +88,7 @@ export default function ProjectDetailPage() {
             Back to Projects
           </Button>
         </Link>
-        
+
         <div className="flex flex-col md:flex-row md:justify-between md:items-start gap-4">
           <div>
             <h1 className="text-3xl font-bold tracking-tight">{project.name}</h1>
@@ -88,18 +97,18 @@ export default function ProjectDetailPage() {
             )}
             <div className="flex items-center gap-2 mt-4 text-sm">
               <span className="font-medium">Base URL:</span>
-              <a 
-                href={project.target_base_url} 
-                target="_blank" 
+              <a
+                href={project.base_url}
+                target="_blank"
                 rel="noopener noreferrer"
                 className="text-primary hover:underline flex items-center"
               >
-                {project.target_base_url}
+                {project.base_url}
                 <ExternalLink className="ml-1 h-3 w-3" />
               </a>
             </div>
           </div>
-          
+
           <Button>
             <PlayCircle className="mr-2 h-4 w-4" />
             Run Suite
