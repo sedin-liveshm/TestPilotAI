@@ -2,7 +2,7 @@
 
 ## Status
 
-Proposed
+Accepted & Frozen (Day 5 Schema Freeze)
 
 ## Context
 
